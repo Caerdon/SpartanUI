@@ -305,6 +305,28 @@ function Artwork_Core:FirstTime()
 
 			SUI_Win.Artwork.Minimal = control
 
+			--Blizzard
+			control = gui:Create('Icon')
+			control:SetImage('interface\\addons\\SpartanUI\\media\\Style_Blizzard')
+			control:SetImageSize(120, 60)
+			control:SetPoint('TOP', SUI_Win.Artwork.Transparent.radio.frame, 'BOTTOM', 0, -30)
+			control:SetCallback('OnClick', RadioButtons)
+			control.frame:SetParent(SUI_Win.Artwork)
+			control.frame:Show()
+
+			radio = gui:Create('CheckBox')
+			radio:SetLabel('Blizzard')
+			radio:SetType('radio')
+			radio:SetDisabled(true)
+			radio:SetWidth(control.frame:GetWidth() / 1.15)
+			radio:SetHeight(16)
+			radio.frame:SetPoint('TOP', control.frame, 'BOTTOM', 0, 0)
+			radio.frame:SetParent(control.frame)
+			radio.frame:Show()
+			control.radio = radio
+
+			SUI_Win.Artwork.Blizzard = control
+
 			SUI_Win.Artwork.Classic.radio:SetValue(true)
 		end,
 		Next = function()
@@ -319,6 +341,9 @@ function Artwork_Core:FirstTime()
 			end
 			if (SUI_Win.Artwork.War.radio:GetValue()) then
 				SUI.DBMod.Artwork.Style = 'War'
+			end
+			if (SUI_Win.Artwork.Blizzard.radio:GetValue()) then
+				SUI.DBMod.Artwork.Style = 'Blizzard'
 			end
 			if (SUI_Win.Artwork.Digital.radio:GetValue()) then
 				SUI.DBMod.Artwork.Style = 'Fel'
@@ -480,7 +505,9 @@ function Artwork_Core:SetupProfile(ProfileOverride)
 	end
 
 	-- Set/Create our Profile
-	Bartender4.db:SetProfile(ProfileName)
+	if Bartender4 then
+		Bartender4.db:SetProfile(ProfileName)
+	end
 
 	--Load the Profile Data
 	for k, v in LibStub('AceAddon-3.0'):IterateModulesOfAddon(Bartender4) do -- for each module (BagBar, ActionBars, etc..)

@@ -150,6 +150,21 @@ function module:OnInitialize()
 							SUI.DBMod.RaidFrames.Style = SUI.DBMod.Artwork.Style
 							module:ArtSetup()
 						end
+					},
+					Blizzard = {
+						name = 'Blizzard',
+						type = 'execute',
+						disabled = true,
+						image = function()
+							return 'interface\\addons\\SpartanUI\\media\\Style_Blizzard', 120, 60
+						end,
+						func = function()
+							SUI.DBMod.Artwork.Style = 'Blizzard'
+							SUI.DBMod.PlayerFrames.Style = SUI.DBMod.Artwork.Style
+							SUI.DBMod.PartyFrames.Style = SUI.DBMod.Artwork.Style
+							SUI.DBMod.RaidFrames.Style = SUI.DBMod.Artwork.Style
+							module:ArtSetup()
+						end
 					}
 				}
 			},
@@ -230,6 +245,18 @@ function module:OnInitialize()
 							SUI.DBMod.Artwork.Style = 'War'
 							module:ArtSetup()
 						end
+					},
+					Blizzard = {
+						name = 'Blizzard',
+						type = 'execute',
+						disabled = true,
+						image = function()
+							return 'interface\\addons\\SpartanUI\\media\\Style_Blizzard', 120, 60
+						end,
+						func = function()
+							SUI.DBMod.Artwork.Style = 'Blizzard'
+							module:ArtSetup()
+						end
 					}
 				}
 			},
@@ -264,6 +291,21 @@ function module:OnInitialize()
 						end,
 						func = function()
 							SUI.DBMod.PlayerFrames.Style = 'War'
+							SUI:UpdateModuleConfigs()
+						end
+					},
+					Blizzard = {
+						name = 'Blizzard',
+						type = 'execute',
+						disabled = true,
+						image = function()
+							return 'interface\\addons\\SpartanUI\\media\\Style_Frames_Fel', 120, 60
+						end,
+						imageCoords = function()
+							return {.1, .5, .1, .5}
+						end,
+						func = function()
+							SUI.DBMod.PlayerFrames.Style = 'Blizzard'
 							SUI:UpdateModuleConfigs()
 						end
 					},
@@ -348,6 +390,21 @@ function module:OnInitialize()
 							SUI:UpdateModuleConfigs()
 						end
 					},
+					Blizzard = {
+						name = 'Blizzard',
+						type = 'execute',
+						disabled = true,
+						image = function()
+							return 'interface\\addons\\SpartanUI\\media\\Style_Frames_Fel', 120, 60
+						end,
+						imageCoords = function()
+							return {0, .5, .5, 1}
+						end,
+						func = function()
+							SUI.DBMod.PartyFrames.Style = 'Blizzard'
+							SUI:UpdateModuleConfigs()
+						end
+					},
 					Fel = {
 						name = 'Fel',
 						type = 'execute',
@@ -426,6 +483,21 @@ function module:OnInitialize()
 						end,
 						func = function()
 							SUI.DBMod.RaidFrames.Style = 'War'
+							SUI:UpdateModuleConfigs()
+						end
+					},
+					Blizzard = {
+						name = 'Blizzard',
+						type = 'execute',
+						disabled = true,
+						image = function()
+							return 'interface\\addons\\SpartanUI\\media\\Style_Frames_Fel', 120, 60
+						end,
+						imageCoords = function()
+							return {.6, .9, .1, .4}
+						end,
+						func = function()
+							SUI.DBMod.RaidFrames.Style = 'Blizzard'
 							SUI:UpdateModuleConfigs()
 						end
 					},
