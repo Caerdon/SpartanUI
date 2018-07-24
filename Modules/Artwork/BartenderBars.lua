@@ -125,6 +125,9 @@ function module:GetMicroMenuBar()
 	return BT4BarMicroMenu
 end
 
+function module:RefreshPositions()
+end
+
 function module:ResetMovedBars()
 	SUI.DBG.BartenderChangesActive = true
 	if SUI.DB.Styles[SUI.DBMod.Artwork.Style].MovedBars == nil then

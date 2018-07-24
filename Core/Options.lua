@@ -15,10 +15,8 @@ local ModsLoaded = {
 }
 
 function module:ArtSetup()
-	-- SUI.DBG.BartenderChangesActive = true
 	SUI:GetModule('Artwork_Core'):SetupProfile()
 	SUI:UpdateModuleConfigs()
-	-- SUI.DBG.BartenderChangesActive = false
 end
 
 function module:OnInitialize()

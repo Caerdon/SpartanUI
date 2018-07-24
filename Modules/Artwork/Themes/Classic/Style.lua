@@ -73,6 +73,7 @@ function module:OnEnable()
 
 		module:EnableFramework()
 		module:EnableActionBars()
+
 		module:EnableMinimap()
 
 		if (SUI.DBMod.Artwork.FirstLoad and BarSetupSuccessful) then

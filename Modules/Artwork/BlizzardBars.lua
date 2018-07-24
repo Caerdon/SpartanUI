@@ -19,7 +19,6 @@ end
 
 function module:GetBagBar()
 	return self.bars.bagframe
-	-- return MicroButtonAndBagsBar
 end
 
 function module:GetStanceBar()
@@ -32,7 +31,14 @@ end
 
 function module:GetMicroMenuBar()
 	return self.bars.microframe
-	-- return MicroButtonAndBagsBar.MicroBagBar
+end
+
+function module:RefreshPositions()
+	local barSettings = SUI.DB.Styles[SUI.DBMod.Artwork.Style].BartenderSettings
+  	local microInfo = barSettings.MicroMenu
+
+	local width = CharacterMicroButton:GetWidth() * #MICRO_BUTTONS
+	MoveMicroButtons("TOPLEFT", self.bars.microframe, "TOPLEFT", 0, 0, false);
 end
 
 function module:ResetMovedBars()
@@ -49,25 +55,58 @@ end
 
 function module:factory()
 	local style = SUI.DBMod.Artwork.Style
-	-- if (not InCombatLockdown()) then
- 	-- UIPARENT_MANAGED_FRAME_POSITIONS["MultiBarBottomLeft"] = {baseY = 20, xOffset = 5, watchBar = 1, maxLevel = 1, anchorTo = "Blizzard_Bar1", point = "BOTTOMLEFT", rpoint = "BOTTOMLEFT"};
- 	-- UIPARENT_MANAGED_FRAME_POSITIONS["MultiBarBottomLeft"].anchorTo = "Blizzard_Bar1"
+	if style == 'Classic' then
+		style = 'SUI'
+	end
 
- 	self.bars.microframe = CreateFrame('Frame', nil)
- 	self.bars.microframe:SetScale(0.50)
+	local barSettings = SUI.DB.Styles[SUI.DBMod.Artwork.Style].BartenderSettings
+
+  	local microInfo = barSettings.MicroMenu
+  	local microWidth = (CharacterMicroButton:GetWidth() * (#MICRO_BUTTONS - 1)) -- 1 less because only store or help will be shown
+ 	self.bars.microframe = CreateFrame('Frame', nil, UIParent)
+ 	self.bars.microframe:SetSize(microWidth, CharacterMicroButton:GetHeight())
  	UpdateMicroButtonsParent(self.bars.microframe)
 
- 	self.bars.bagframe = CreateFrame('Frame', nil)
- 	self.bars.bagframe:SetScale(0.75)
- 	
- 	MainMenuBarBackpackButton:SetParent(self.bars.bagframe)
- 	CharacterBag1Slot:SetParent(self.bars.bagframe)
- 	CharacterBag2Slot:SetParent(self.bars.bagframe)
- 	CharacterBag3Slot:SetParent(self.bars.bagframe)
- 	MicroButtonAndBagsBar:Hide()
+ 	self.bars.microframe:SetScale(microInfo.position.scale)
+ 	self.bars.microframe:ClearAllPoints()
+	if(SUI.DBMod.Artwork.Style == 'Classic') then
+	 	self.bars.microframe:SetPoint(microInfo.position.point, microInfo.position.parent, microInfo.position.point, microInfo.position.x / microInfo.position.scale - 45, microInfo.position.y)
+	else
+	 	self.bars.microframe:SetPoint(microInfo.position.point, microInfo.position.parent, microInfo.position.point, microInfo.position.x / microInfo.position.scale + self.bars.microframe:GetWidth() / 2 + microInfo.padding, microInfo.position.y)
+	end
+ 	self.bars.microframe:SetFrameStrata('LOW')
 
-	MainMenuBar:SetFrameLevel(MainMenuBar:GetFrameLevel()-1)
-	MainMenuBarArtFrame:SetFrameLevel(MainMenuBarArtFrame:GetFrameLevel()-1)
+  	local bagInfo = barSettings.BagBar
+	self.bars.bagframe = CreateFrame('Frame', nil, UIParent)
+ 	MainMenuBarBackpackButton:SetParent(self.bars.bagframe)
+
+ 	self.bars.bagframe:SetSize(CharacterBag0Slot:GetWidth() * NUM_BAG_FRAMES + 1, CharacterMicroButton:GetHeight())
+ 	self.bars.bagframe:SetScale(bagInfo.position.scale)
+ 	self.bars.bagframe:ClearAllPoints()
+	if(SUI.DBMod.Artwork.Style == 'Classic' or SUI.DBMod.Artwork.Style == 'Minimal') then
+		-- TODO: I'm missing where this difference comes from...
+		-- flagging it for now until I track it down.
+	 	self.bars.bagframe:SetPoint(bagInfo.position.point, bagInfo.position.parent, bagInfo.position.point, bagInfo.position.x / bagInfo.position.scale + self.bars.bagframe:GetWidth() / 2 - 128, bagInfo.position.y)
+	else
+	 	self.bars.bagframe:SetPoint(bagInfo.position.point, bagInfo.position.parent, bagInfo.position.point, bagInfo.position.x / bagInfo.position.scale - self.bars.bagframe:GetWidth() / bagInfo.position.scale, bagInfo.position.y)
+	end
+	MainMenuBarBackpackButton:ClearAllPoints()
+ 	MainMenuBarBackpackButton:SetPoint("TOPLEFT", self.bars.bagframe, "TOPLEFT", 0, 0)
+ 	local previousBag = MainMenuBarBackpackButton
+ 	for i = 0, NUM_BAG_FRAMES - 1 do
+ 		local bag = _G['CharacterBag'..i..'Slot']
+ 		bag:SetScale(1)
+ 		bag:SetParent(self.bars.bagframe)
+ 		bag:ClearAllPoints()
+ 		bag:SetPoint("TOPLEFT", previousBag, "TOPRIGHT", 0, 0)
+ 		previousBag = bag
+ 	end
+
+ 	self.bars.bagframe:SetFrameStrata('LOW')
+
+	MicroButtonAndBagsBar:Hide()
+
+	MainMenuBar:SetFrameStrata('LOW')
 	MainMenuBarArtFrame.LeftEndCap:Hide()
 	MainMenuBarArtFrame.RightEndCap:Hide()
 	MainMenuBarArtFrameBackground:Hide()
@@ -111,24 +150,42 @@ function module:factory()
 	    end
 	    -- end
     end)
-   -- MultiBarBottomLeft:SetScale(0.725)
-    -- MainMenuBarArtFrameBackground:SetScale(0.725)
-    -- for i = 1, 12 do
-    -- 	_G['ActionButton' .. i]:SetScale(0.725)
-    -- end
-    -- ActionBarUpButton:SetScale(0.725)
-    -- ActionBarDownButton:SetScale(0.725)
--- end
-	hooksecurefunc(
-		'UpdateContainerFrameAnchors',
-		function()
- 	-- CharacterMicroButton:ClearAllPoints()
- 	-- CharacterMicroButton:SetPoint("LEFT", self.bars.microframe, "LEFT", 0, 0)
-	-- UIPARENT_MANAGED_FRAME_POSITIONS["MultiBarBottomLeft"] = {baseY = 2, xOffset = 5, watchBar = 1, maxLevel = 1, anchorTo = "Blizzard_Bar1", point = "BOTTOMLEFT", rpoint = "BOTTOMLEFT"};
-	-- MultiBarBottomLeft:ClearAllPoints()
-    -- MultiBarBottomLeft:SetPoint("LEFT", Blizzard_Bar1, "LEFT", 5, 20)
+
+    hooksecurefunc('MainMenuMicroButton_PositionAlert', function(alert)
+    	-- Make sure alert is visible even if placed at the top.
+    	local alertPoint = "BOTTOM"
+    	local parentPoint = "TOP"
+    	local parentInvert = 1
+
+    	if ( alert.MicroButton:GetTop() > UIParent:GetTop() ) then
+    		alertPoint = "TOP"
+    		parentPoint = "BOTTOM"
+    		parentInvert = -1
+    	end
+
+    	if ( alert.MicroButton:GetRight() + (alert:GetWidth() / 2) > UIParent:GetRight() ) then
+			alert:ClearAllPoints();
+			alert:SetPoint(alertPoint .. "RIGHT", alert.MicroButton, parentPoint .. "RIGHT", 16, 20 * parentInvert);
+			alert.Arrow:ClearAllPoints();
+			alert.Arrow:SetPoint("TOPRIGHT", alert, "BOTTOMRIGHT", -4, 4 * parentInvert);
+		elseif ( alert.MicroButton:GetLeft() + (alert:GetWidth() / 2) < UIParent:GetLeft() ) then
+			alert:ClearAllPoints();
+			alert:SetPoint(alertPoint .. "LEFT", alert.MicroButton, parentPoint .. "LEFT", -16, 20 * parentInvert);
+			alert.Arrow:ClearAllPoints();
+			alert.Arrow:SetPoint(parentPoint.."LEFT", alert, alertPoint.."LEFT", 4, 1 * parentInvert);
+		else
+			alert:ClearAllPoints();
+			alert:SetPoint(alertPoint, alert.MicroButton, parentPoint, 0, 20 * parentInvert);
+			alert.Arrow:ClearAllPoints();
+			alert.Arrow:SetPoint(parentPoint, alert, alertPoint, 0, 4 * parentInvert);
 		end
-	)
+
+		local buttonName = alert.MicroButton:GetName()
+		_G[buttonName .. "AlertArrow"]:SetRotation(math.pi / 2 - (math.pi * parentInvert) / 2)
+		_G[buttonName .. "AlertGlow"]:SetRotation(math.pi / 2 - (math.pi * parentInvert) / 2)
+		_G[buttonName .. "AlertGlow"]:ClearAllPoints()
+		_G[buttonName .. "AlertGlow"]:SetPoint("TOP", _G[buttonName .. "AlertArrow"], "TOP", 0, 4 + -4 * parentInvert)
+    end)
 
 end
 

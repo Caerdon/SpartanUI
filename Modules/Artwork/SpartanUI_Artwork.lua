@@ -132,7 +132,7 @@ function Artwork_Core:ActionBarPlates(plate, excludelist)
 		-- could apply to anything.  Can this whole thing be moved to BartenderBars (ApplyMovedPanels), 
 		-- or do we need to split it out?
 
-		-- If the name contains Bartender and we have not moved it set the parent to what is in sorage
+		-- If the name contains Bartender and we have not moved it set the parent to what is in storage
 		-- if (frame:GetName():match("BT4Bar")) and storage.parent and not SUI.DB.Styles[SUI.DBMod.Artwork.Style].MovedBars[frame:GetName()] then
 		if
 			(frame:GetName():match('BT4Bar') and not excluded) and
@@ -476,5 +476,12 @@ function Artwork_Core:GetMicroMenuBar()
 	local BarModule = GetBarModule()
 	if BarModule then
 		return BarModule:GetMicroMenuBar()
+	end
+end
+
+function Artwork_Core:RefreshPositions()
+	local BarModule = GetBarModule()
+	if BarModule then
+		return BarModule:RefreshPositions()
 	end
 end

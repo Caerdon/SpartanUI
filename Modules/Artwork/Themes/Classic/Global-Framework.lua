@@ -122,6 +122,8 @@ function module:updateSpartanOffset() -- handles SpartanUI offset based on setti
 		anchor:SetHeight(offset)
 	end
 	SUI.DB.yoffset = offset
+
+	Artwork_Core:RefreshPositions()
 end
 
 function module:updateSpartanXOffset() -- handles SpartanUI offset based on setting or fubar / titan

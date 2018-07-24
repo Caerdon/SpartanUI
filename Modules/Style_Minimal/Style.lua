@@ -30,13 +30,6 @@ function module:Init()
 end
 
 function module:FirstLoad()
-	--If our profile exists activate it.
-	if
-		((Bartender4.db:GetCurrentProfile() ~= SUI.DB.Styles.Minimal.BartenderProfile) and
-			Artwork_Core:BartenderProfileCheck(SUI.DB.Styles.Minimal.BartenderProfile, true))
-	 then
-		Bartender4.db:SetProfile(SUI.DB.Styles.Minimal.BartenderProfile)
-	end
 end
 
 function module:OnEnable()

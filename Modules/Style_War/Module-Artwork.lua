@@ -159,6 +159,8 @@ function module:updateOffset()
 
 	War_ActionBarPlate:ClearAllPoints()
 	War_ActionBarPlate:SetPoint('BOTTOM', UIParent, 'BOTTOM', 0, offset)
+
+	Artwork_Core:RefreshPositions()
 end
 
 --	Module Calls
