@@ -1099,19 +1099,12 @@ function SUI:OnEnable()
 			name = 'SpartanUI',
 			type = 'group',
 			args = {
-				n1 = {
-					type = 'description',
-					fontSize = 'medium',
-					order = 1,
-					width = 'full',
-					name = 'Options have moved into their own window as this menu was getting a bit crowded.'
-				},
 				n3 = {
 					type = 'description',
 					fontSize = 'medium',
 					order = 3,
 					width = 'full',
-					name = 'Options can be accessed by the button below or by typing /sui or /spartanui'
+					name = L['Options can be accessed by the button below or by typing /sui']
 				},
 				Close = {
 					name = 'Launch Options',
@@ -1187,7 +1180,9 @@ function SUI:ChatCommand(input)
 			ResetDBWarning = true
 			SUI:Print('|cffff0000Warning')
 			SUI:Print(
-				'This will reset the full SpartanUI & Bar Setup. If you wish to continue perform the chat command again.'
+				L[
+					'This will reset the full SpartanUI & Bartender4 database. If you wish to continue perform the chat command again.'
+				]
 			)
 		end
 	elseif input == 'resetbartender' then
@@ -1198,13 +1193,13 @@ function SUI:ChatCommand(input)
 		else
 			ResetDBWarning = true
 			SUI:Print('|cffff0000Warning')
-			SUI:Print('This will reset the SpartanUI Database. If you wish to continue perform the chat command again.')
+			SUI:Print(L['This will reset the SpartanUI Database. If you wish to continue perform the chat command again.'])
 		end
 	elseif input == 'help' then
 		SUI:suihelp()
 	elseif input == 'version' then
-		SUI:Print('SpartanUI ' .. L['Version'] .. ' ' .. GetAddOnMetadata('SpartanUI', 'Version'))
-		SUI:Print('SpartanUI Build Number ' .. L['Version'] .. ' ' .. GetAddOnMetadata('SpartanUI', 'X-Build'))
+		SUI:Print(L['Version'] .. ' ' .. GetAddOnMetadata('SpartanUI', 'Version'))
+		SUI:Print(L['Build'] .. ' ' .. GetAddOnMetadata('SpartanUI', 'X-Build'))
 	else
 		AceConfigDialog:SetDefaultSize('SpartanUI', 850, 600)
 		AceConfigDialog:Open('SpartanUI')

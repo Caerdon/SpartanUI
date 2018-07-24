@@ -3,12 +3,11 @@ local L = SUI.L
 local Artwork_Core = SUI:GetModule('Artwork_Core')
 
 function Artwork_Core:SetupOptions()
-	local styleName = SUI.DBMod.Artwork.Style
-	-- This isn't always set for some reason causing a crash on a DB reset
-	if styleName == nil or styleName == '' then
-		styleName = 'Classic'
+	if SUI.DBMod.Artwork.Style == '' then
+		return
 	end
-	local Style = SUI:GetModule('Style_' .. styleName)
+	
+	local Style = SUI:GetModule('Style_' .. SUI.DBMod.Artwork.Style)
 	SUI.opt.args['Artwork'].args['scale'] = {
 		name = L['ConfScale'],
 		type = 'range',

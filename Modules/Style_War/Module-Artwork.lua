@@ -32,10 +32,6 @@ local CurScale
 local petbattle, trayWatcher = CreateFrame('Frame'), CreateFrame('Frame')
 
 -- Misc Framework stuff
-local trayWatcherEvents = function()
-	module:updateOffset()
-end
-
 function module:updateScale()
 	if (not SUI.DB.scale) then -- make sure the variable exists, and auto-configured based on screen size
 		local width, height = string.match(GetCVar('gxResolution'), '(%d+).-(%d+)')
@@ -123,7 +119,15 @@ function module:updateOffset()
 			end
 		end
 
-		TitanBarOrder = {[1] = 'AuxBar2', [2] = 'AuxBar'} -- Bottom 2 Bar names
+		local TitanTopBar = {[1] = 'Bar2', [2] = 'Bar'} -- Top 2 Bar names
+		for i = 1, 2 do
+			if (_G['Titan_Bar__Display_' .. TitanTopBar[i]] and TitanPanelGetVar(TitanTopBar[i] .. '_Show')) then
+				local PanelScale = TitanPanelGetVar('Scale') or 1
+				Top = Top + (PanelScale * _G['Titan_Bar__Display_' .. TitanTopBar[i]]:GetHeight())
+			end
+		end
+
+		local TitanBarOrder = {[1] = 'AuxBar2', [2] = 'AuxBar'} -- Bottom 2 Bar names
 
 		for i = 1, 2 do
 			if (_G['Titan_Bar__Display_' .. TitanBarOrder[i]] and TitanPanelGetVar(TitanBarOrder[i] .. '_Show')) then
@@ -145,16 +149,23 @@ function module:updateOffset()
 	module.Trays.right:SetPoint('TOP', UIParent, 'TOP', 300, (Top * -1))
 
 	if Artwork_Core:GetBagBar() then
-		Artwork_Core:GetBagBar():ClearAllPoints()
-		Artwork_Core:GetStanceBar():ClearAllPoints()
-		Artwork_Core:GetPetBar():ClearAllPoints()
-		Artwork_Core:GetMicroMenuBar():ClearAllPoints()
+		if not SUI.DB.Styles.War.MovedBars.BT4BarPetBar then
+			Artwork_Core:GetPetBar():ClearAllPoints()
+			Artwork_Core:GetPetBar():SetPoint('TOPLEFT', module.Trays.left, 'TOPLEFT', 50, -2)
+		end
+		if not SUI.DB.Styles.War.MovedBars.BT4BarStanceBar then
+			Artwork_Core:GetStanceBar():ClearAllPoints()
+			Artwork_Core:GetStanceBar():SetPoint('TOPRIGHT', module.Trays.left, 'TOPRIGHT', -50, -2)
+		end
 
-		Artwork_Core:GetBagBar():SetPoint('TOPRIGHT', module.Trays.right, 'TOPRIGHT', -50, -2)
-		Artwork_Core:GetMicroMenuBar():SetPoint('TOPLEFT', module.Trays.right, 'TOPLEFT', 50, -2)
-
-		Artwork_Core:GetStanceBar():SetPoint('TOPRIGHT', module.Trays.left, 'TOPRIGHT', -50, -2)
-		Artwork_Core:GetPetBar():SetPoint('TOPLEFT', module.Trays.left, 'TOPLEFT', 50, -2)
+		if not SUI.DB.Styles.War.MovedBars.BT4BarMicroMenu then
+			Artwork_Core:GetMicroMenuBar():ClearAllPoints()
+			Artwork_Core:GetMicroMenuBar():SetPoint('TOPLEFT', module.Trays.right, 'TOPLEFT', 50, -2)
+		end
+		if not SUI.DB.Styles.War.MovedBars.BT4BarBagBar then
+			Artwork_Core:GetBagBar():ClearAllPoints()
+			Artwork_Core:GetBagBar():SetPoint('TOPRIGHT', module.Trays.right, 'TOPRIGHT', -50, -2)
+		end
 	end
 
 	War_ActionBarPlate:ClearAllPoints()
@@ -230,7 +241,7 @@ function module:EnableArtwork()
 	War_SpartanUI:SetFrameLevel(1)
 
 	War_SpartanUI.Left = War_SpartanUI:CreateTexture('War_SpartanUI_Left', 'BORDER')
-	War_SpartanUI.Left:SetPoint('BOTTOMRIGHT', UIParent, 'BOTTOM', 0, 0)
+	War_SpartanUI.Left:SetPoint('BOTTOMRIGHT', War_ActionBarPlate, 'BOTTOM', 0, 0)
 
 	War_SpartanUI.Right = War_SpartanUI:CreateTexture('War_SpartanUI_Right', 'BORDER')
 	War_SpartanUI.Right:SetPoint('LEFT', War_SpartanUI.Left, 'RIGHT', 0, 0)
@@ -274,7 +285,7 @@ function module:EnableArtwork()
 		'OnShow',
 		function()
 			MainMenuBarVehicleLeaveButton:ClearAllPoints()
-			MainMenuBarVehicleLeaveButton:SetPoint('LEFT', SUI_playerFrame, 'RIGHT', 15, 0)
+			MainMenuBarVehicleLeaveButton:SetPoint('BOTTOM', War_SpartanUI.Left, 'TOPRIGHT', 0, 20)
 		end
 	)
 
@@ -313,34 +324,55 @@ end
 
 local SetBarVisibility = function(side, state)
 	if side == 'left' and state == 'hide' then
-		if not SUI.DB.Styles.War.MovedBars.BT4BarStanceBar then
+		-- BT4BarStanceBar
+		if not SUI.DB.Styles.War.MovedBars.BT4BarStanceBar and not SUI.DB.Styles.War.MovedBars.BT4BarStanceBar then
 			Artwork_Core:GetStanceBar():Hide()
 		end
-		if not SUI.DB.Styles.War.MovedBars.BT4BarPetBar then
+		if not SUI.DB.Styles.War.MovedBars.BT4BarPetBar and not SUI.DB.Styles.War.MovedBars.BT4BarPetBar then
 			Artwork_Core:GetPetBar():Hide()
 		end
 	elseif side == 'right' and state == 'hide' then
-		if not SUI.DB.Styles.War.MovedBars.BT4BarBagBar then
+		if not SUI.DB.Styles.War.MovedBars.BT4BarBagBar and not SUI.DB.Styles.War.MovedBars.BT4BarBagBar then
 			Artwork_Core:GetBagBar():Hide()
 		end
-		if not SUI.DB.Styles.War.MovedBars.BT4BarMicroMenu then
+		if not SUI.DB.Styles.War.MovedBars.BT4BarMicroMenu and not SUI.DB.Styles.War.MovedBars.BT4BarMicroMenu then
 			Artwork_Core:GetMicroMenuBar():Hide()
 		end
 	end
 
 	if side == 'left' and state == 'show' then
-		if not SUI.DB.Styles.War.MovedBars.BT4BarStanceBar then
+		-- BT4BarStanceBar
+		if not SUI.DB.Styles.War.MovedBars.BT4BarStanceBar and not SUI.DB.Styles.War.MovedBars.BT4BarStanceBar then
 			Artwork_Core:GetStanceBar():Show()
 		end
-		if not SUI.DB.Styles.War.MovedBars.BT4BarPetBar then
+		if not SUI.DB.Styles.War.MovedBars.BT4BarPetBar and not SUI.DB.Styles.War.MovedBars.BT4BarPetBar then
 			Artwork_Core:GetPetBar():Show()
 		end
 	elseif side == 'right' and state == 'show' then
-		if not SUI.DB.Styles.War.MovedBars.BT4BarBagBar then
+		if not SUI.DB.Styles.War.MovedBars.BT4BarBagBar and not SUI.DB.Styles.War.MovedBars.BT4BarBagBar then
 			Artwork_Core:GetBagBar():Show()
 		end
-		if not SUI.DB.Styles.War.MovedBars.BT4BarMicroMenu then
+		if not SUI.DB.Styles.War.MovedBars.BT4BarMicroMenu and not SUI.DB.Styles.War.MovedBars.BT4BarMicroMenu then
 			Artwork_Core:GetMicroMenuBar():Show()
+		end
+	end
+end
+
+local trayWatcherEvents = function()
+	module:updateOffset()
+	local trayIDs = {'left', 'right'}
+	War_MenuBarBG:SetAlpha(0)
+	War_StanceBarBG:SetAlpha(0)
+
+	for _, key in ipairs(trayIDs) do
+		if SUI.DB.Styles.War.SlidingTrays[key].collapsed then
+			module.Trays[key].expanded:Hide()
+			module.Trays[key].collapsed:Show()
+			SetBarVisibility(module.Trays[key], 'hide')
+		else
+			module.Trays[key].expanded:Show()
+			module.Trays[key].collapsed:Hide()
+			SetBarVisibility(module.Trays[key], 'show')
 		end
 	end
 end
@@ -446,6 +478,28 @@ function module:SlidingTrays()
 	trayWatcher:RegisterEvent('ZONE_CHANGED')
 	trayWatcher:RegisterEvent('ZONE_CHANGED_INDOORS')
 	trayWatcher:RegisterEvent('ZONE_CHANGED_NEW_AREA')
+
+	-- Default movetracker ignores stuff attached to UIParent (Tray items are)
+	local FrameList = {
+		BT4BarBagBar,
+		BT4BarStanceBar,
+		BT4BarPetBar,
+		BT4BarMicroMenu
+	}
+
+	for _, v in ipairs(FrameList) do
+		if v then
+			v.SavePosition = function()
+				if not SUI.DB.Styles[SUI.DBMod.Artwork.Style].MovedBars[v:GetName()] and not SUI.DBG.BartenderChangesActive then
+					SUI.DB.Styles[SUI.DBMod.Artwork.Style].MovedBars[v:GetName()] = true
+					LibStub('LibWindow-1.1').windowData[v].storage.parent = UIParent
+					v:SetParent(UIParent)
+				end
+
+				LibStub('LibWindow-1.1').SavePosition(v)
+			end
+		end
+	end
 end
 
 -- Bartender Stuff

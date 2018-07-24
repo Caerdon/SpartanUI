@@ -270,7 +270,7 @@ local showHonorTooltip = function(self)
 	local currentHonor = UnitHonor('player')
 	local maxHonor = UnitHonorMax('player')
 
-	self.tooltip.TextFrame.HeaderText:SetFormattedText(HONOR_LEVEL_LABEL, C_PvP.GetNextHonorLevelForReward(honorLevel))
+	self.tooltip.TextFrame.HeaderText:SetFormattedText(HONOR_LEVEL_LABEL, honorLevel)
 	self.tooltip.TextFrame.MainText:SetFormattedText(
 		'( %s / %s ) %d%%',
 		SUI:comma_value(currentHonor),
@@ -365,6 +365,7 @@ function module:factory()
 
 			--Tooltip
 			local tooltip = CreateFrame('Frame')
+			tooltip:SetFrameStrata("TOOLTIP")
 			tooltip:SetSize(unpack(StyleSetting.TooltipSize))
 			if StyleSetting.tooltipAnchor == 'TOP' then
 				tooltip:SetPoint('BOTTOM', statusbar, 'TOP')
@@ -378,6 +379,7 @@ function module:factory()
 			tooltip.bg:SetTexCoord(unpack(StyleSetting.texCordsTooltip))
 
 			local TextFrame = CreateFrame('Frame')
+			TextFrame:SetFrameStrata("TOOLTIP")
 			TextFrame:SetSize(unpack(StyleSetting.TooltipTextSize))
 			TextFrame:SetPoint('CENTER', tooltip, 'CENTER')
 
