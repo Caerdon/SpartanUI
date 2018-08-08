@@ -496,6 +496,6 @@ end
 function Artwork_Core:RefreshPositions()
 	local BarModule = GetBarModule()
 	if BarModule then
-		return BarModule:RefreshPositions()
-		end
+		return BarModule:RefreshPositions(self)
+	end
 end
