@@ -47,6 +47,92 @@ local function GetBarModule()
 	return barModule
 end
 
+function Artwork_Core:updateScale()
+	--Set default scale based on if the user is using a widescreen.
+	if (not SUI.DB.scale) then
+		local width, height = string.match(GetCVar('gxResolution'), '(%d+).-(%d+)')
+		if (tonumber(width) / tonumber(height) > 4 / 3) then
+			SUI.DB.scale = 0.92
+		else
+			SUI.DB.scale = 0.78
+		end
+	end
+
+	-- Call module scale update if defined.
+	local style = SUI:GetModule('Style_' .. SUI.DBMod.Artwork.Style)
+	if style.updateScale then
+		style:updateScale()
+	end
+end
+
+function Artwork_Core:updateOffset()
+	if InCombatLockdown() then
+		return
+	end
+
+	local Top = 0
+	local fubar, ChocolateBar, titan = 0, 0, 0
+
+	if not SUI.DB.yoffsetAuto then
+		offset = max(SUI.DB.yoffset, 0)
+	else
+		for i = 1, 4 do -- FuBar Offset
+			if (_G['FuBarFrame' .. i] and _G['FuBarFrame' .. i]:IsVisible()) then
+				local bar = _G['FuBarFrame' .. i]
+				local point = bar:GetPoint(1)
+				if point:find('TOP.*') then
+					Top = Top + bar:GetHeight()
+				end
+				if point == 'BOTTOMLEFT' then
+					fubar = fubar + bar:GetHeight()
+				end
+			end
+		end
+
+		for i = 1, 100 do -- Chocolate Bar Offset
+			if (_G['ChocolateBar' .. i] and _G['ChocolateBar' .. i]:IsVisible()) then
+				local bar = _G['ChocolateBar' .. i]
+				local point = bar:GetPoint(1)
+				if point:find('TOP.*') then
+					Top = Top + bar:GetHeight()
+				end
+				if point == 'RIGHT' then
+					ChocolateBar = ChocolateBar + bar:GetHeight()
+				end
+			end
+		end
+
+		local TitanTopBar = {[1] = 'Bar2', [2] = 'Bar'} -- Top 2 Bar names
+		for i = 1, 2 do
+			if (_G['Titan_Bar__Display_' .. TitanTopBar[i]] and TitanPanelGetVar(TitanTopBar[i] .. '_Show')) then
+				local PanelScale = TitanPanelGetVar('Scale') or 1
+				Top = Top + (PanelScale * _G['Titan_Bar__Display_' .. TitanTopBar[i]]:GetHeight())
+			end
+		end
+
+		local TitanBarOrder = {[1] = 'AuxBar2', [2] = 'AuxBar'} -- Bottom 2 Bar names
+
+		for i = 1, 2 do
+			if (_G['Titan_Bar__Display_' .. TitanBarOrder[i]] and TitanPanelGetVar(TitanBarOrder[i] .. '_Show')) then
+				local PanelScale = TitanPanelGetVar('Scale') or 1
+				titan = titan + (PanelScale * _G['Titan_Bar__Display_' .. TitanBarOrder[i]]:GetHeight())
+			end
+		end
+
+		if OrderHallCommandBar and OrderHallCommandBar:IsVisible() then
+			Top = Top + OrderHallCommandBar:GetHeight()
+		end
+
+		offset = max(fubar + titan + ChocolateBar, 0)
+		SUI.DB.yoffset = offset
+	end
+
+	-- Call module scale update if defined.
+	local style = SUI:GetModule('Style_' .. SUI.DBMod.Artwork.Style)
+	if style.updateOffset then
+		style:updateOffset(Top, offset)
+	end
+end
 
 function Artwork_Core:isPartialMatch(frameName, tab)
 	local result = false
@@ -170,185 +256,117 @@ end
 function Artwork_Core:FirstTime()
 	SUI.DBMod.Artwork.SetupDone = false
 	local PageData = {
+		ID = 'ArtworkCore',
+		Name = 'SpartanUI style',
 		SubTitle = 'Art Style',
 		Desc1 = 'Please pick an art style from the options below.',
+		RequireReload = true,
+		Priority = true,
+		Skipable = true,
+		NoReloadOnSkip = true,
+		RequireDisplay = SUI.DBMod.Artwork.SetupDone,
 		Display = function()
+			local window = SUI:GetModule('SetupWizard').window
+			local SUI_Win = window.content
+			local StdUi = window.StdUi
+			
 			--Container
 			SUI_Win.Artwork = CreateFrame('Frame', nil)
-			SUI_Win.Artwork:SetParent(SUI_Win.content)
-			SUI_Win.Artwork:SetAllPoints(SUI_Win.content)
+			SUI_Win.Artwork:SetParent(SUI_Win)
+			SUI_Win.Artwork:SetAllPoints(SUI_Win)
 
 			local RadioButtons = function(self)
-				SUI_Win.Artwork.Classic.radio:SetValue(false)
-				SUI_Win.Artwork.Transparent.radio:SetValue(false)
-				SUI_Win.Artwork.Minimal.radio:SetValue(false)
-				SUI_Win.Artwork.Fel.radio:SetValue(false)
-				SUI_Win.Artwork.War.radio:SetValue(false)
-				SUI_Win.Artwork.Digital.radio:SetValue(false)
-				self.radio:SetValue(true)
+				self.radio:Click()
 			end
 
-			local gui = LibStub('AceGUI-3.0')
-			local control, radio
+			local control
 
 			--Classic
-			control = gui:Create('Icon')
-			control:SetImage('interface\\addons\\SpartanUI_Artwork\\Themes\\Classic\\Images\\base-center')
-			control:SetImageSize(120, 60)
-			control:SetPoint('TOPLEFT', SUI_Win.Artwork, 'TOPLEFT', 80, -30)
-			control:SetCallback('OnClick', RadioButtons)
-			control.frame:SetParent(SUI_Win.Artwork)
-			control.frame:Show()
+			control = StdUi:HighlightButton(SUI_Win.Artwork, 120, 60, '')
+			control:SetScript('OnClick', RadioButtons)
+			control:SetNormalTexture('interface\\addons\\SpartanUI_Artwork\\Themes\\Classic\\Images\\base-center')
 
-			radio = gui:Create('CheckBox')
-			radio:SetLabel('Classic')
-			radio:SetType('radio')
-			radio:SetDisabled(true)
-			radio:SetWidth(control.frame:GetWidth() / 1.4)
-			radio:SetHeight(16)
-			radio.frame:SetPoint('TOP', control.frame, 'BOTTOM', 0, 0)
-			radio:SetCallback('OnClick', RadioButton)
-			radio.frame:SetParent(control.frame)
-			radio.frame:Show()
-			control.radio = radio
+			control.radio = StdUi:Radio(SUI_Win.Artwork, 'Classic', 'SUIArtwork', 120, 20)
+			control.radio:SetValue('Classic')
+			StdUi:GlueBelow(control.radio, control)
 
 			SUI_Win.Artwork.Classic = control
 
 			--Fel
-			control = gui:Create('Icon')
-			control:SetImage('interface\\addons\\SpartanUI\\media\\Style_Fel')
-			control:SetImageSize(120, 60)
-			control:SetPoint('LEFT', SUI_Win.Artwork.Classic.frame, 'RIGHT', 30, 0)
-			control:SetCallback('OnClick', RadioButtons)
-			control.frame:SetParent(SUI_Win.Artwork)
-			control.frame:Show()
+			control = StdUi:HighlightButton(SUI_Win.Artwork, 120, 60, '')
+			control:SetScript('OnClick', RadioButtons)
+			control:SetNormalTexture('interface\\addons\\SpartanUI\\media\\Style_Fel')
 
-			radio = gui:Create('CheckBox')
-			radio:SetLabel('Fel')
-			radio:SetType('radio')
-			radio:SetDisabled(true)
-			radio:SetWidth(control.frame:GetWidth() / 1.15)
-			radio:SetHeight(16)
-			radio.frame:SetPoint('TOP', control.frame, 'BOTTOM', 0, 0)
-			radio.frame:SetParent(control.frame)
-			radio.frame:Show()
-			control.radio = radio
+			control.radio = StdUi:Radio(SUI_Win.Artwork, 'Fel', 'SUIArtwork', 120, 20)
+			control.radio:SetValue('Fel')
+			StdUi:GlueBelow(control.radio, control)
 
 			SUI_Win.Artwork.Fel = control
 
 			--War
-			control = gui:Create('Icon')
-			control:SetImage('interface\\addons\\SpartanUI\\media\\Style_War')
-			control:SetImageSize(120, 60)
-			control:SetPoint('LEFT', SUI_Win.Artwork.Fel.frame, 'RIGHT', 30, 0)
-			control:SetCallback('OnClick', RadioButtons)
-			control.frame:SetParent(SUI_Win.Artwork)
-			control.frame:Show()
+			control = StdUi:HighlightButton(SUI_Win.Artwork, 120, 60, '')
+			control:SetScript('OnClick', RadioButtons)
+			control:SetNormalTexture('interface\\addons\\SpartanUI\\media\\Style_War')
 
-			radio = gui:Create('CheckBox')
-			radio:SetLabel('War')
-			radio:SetType('radio')
-			radio:SetDisabled(true)
-			radio:SetWidth(control.frame:GetWidth() / 1.15)
-			radio:SetHeight(16)
-			radio.frame:SetPoint('TOP', control.frame, 'BOTTOM', 0, 0)
-			radio.frame:SetParent(control.frame)
-			radio.frame:Show()
-			control.radio = radio
+			control.radio = StdUi:Radio(SUI_Win.Artwork, 'War', 'SUIArtwork', 120, 20)
+			control.radio:SetValue('War')
+			StdUi:GlueBelow(control.radio, control)
 
 			SUI_Win.Artwork.War = control
 
 			--Digital
-			control = gui:Create('Icon')
-			control:SetImage('interface\\addons\\SpartanUI\\media\\Style_Digital')
-			control:SetImageSize(120, 60)
-			control:SetPoint('TOP', SUI_Win.Artwork.Classic.radio.frame, 'BOTTOM', 0, -30)
-			control:SetCallback('OnClick', RadioButtons)
-			control.frame:SetParent(SUI_Win.Artwork)
-			control.frame:Show()
+			control = StdUi:HighlightButton(SUI_Win.Artwork, 120, 60, '')
+			control:SetScript('OnClick', RadioButtons)
+			control:SetNormalTexture('interface\\addons\\SpartanUI\\media\\Style_Digital')
 
-			radio = gui:Create('CheckBox')
-			radio:SetLabel('Digital')
-			radio:SetType('radio')
-			radio:SetDisabled(true)
-			radio:SetWidth(control.frame:GetWidth() / 1.15)
-			radio:SetHeight(16)
-			radio.frame:SetPoint('TOP', control.frame, 'BOTTOM', 0, 0)
-			radio.frame:SetParent(control.frame)
-			radio.frame:Show()
-			control.radio = radio
+			control.radio = StdUi:Radio(SUI_Win.Artwork, 'Digital', 'SUIArtwork', 120, 20)
+			control.radio:SetValue('Digital')
+			StdUi:GlueBelow(control.radio, control)
 
 			SUI_Win.Artwork.Digital = control
 
 			--Transparent
-			control = gui:Create('Icon')
-			control:SetImage('interface\\addons\\SpartanUI\\media\\Style_Transparent')
-			control:SetImageSize(120, 60)
-			control:SetPoint('LEFT', SUI_Win.Artwork.Digital.frame, 'RIGHT', 30, 0)
-			control:SetCallback('OnClick', RadioButtons)
-			control.frame:SetParent(SUI_Win.Artwork)
-			control.frame:Show()
+			control = StdUi:HighlightButton(SUI_Win.Artwork, 120, 60, '')
+			control:SetScript('OnClick', RadioButtons)
+			control:SetNormalTexture('interface\\addons\\SpartanUI\\media\\Style_Transparent')
 
-			radio = gui:Create('CheckBox')
-			radio:SetLabel('Transparent')
-			radio:SetType('radio')
-			radio:SetDisabled(true)
-			radio:SetWidth(control.frame:GetWidth() / 1.15)
-			radio:SetHeight(16)
-			radio.frame:SetPoint('TOP', control.frame, 'BOTTOM', 0, 0)
-			radio.frame:SetParent(control.frame)
-			radio.frame:Show()
-			control.radio = radio
+			control.radio = StdUi:Radio(SUI_Win.Artwork, 'Transparent', 'SUIArtwork', 120, 20)
+			control.radio:SetValue('Transparent')
+			StdUi:GlueBelow(control.radio, control)
 
 			SUI_Win.Artwork.Transparent = control
 
 			--Minimal
-			control = gui:Create('Icon')
-			control:SetImage('interface\\addons\\SpartanUI\\media\\Style_Minimal')
-			control:SetImageSize(120, 60)
-			control:SetPoint('LEFT', SUI_Win.Artwork.Transparent.frame, 'RIGHT', 30, 0)
-			control:SetCallback('OnClick', RadioButtons)
-			control.frame:SetParent(SUI_Win.Artwork)
-			control.frame:Show()
+			control = StdUi:HighlightButton(SUI_Win.Artwork, 120, 60, '')
+			control:SetScript('OnClick', RadioButtons)
+			control:SetNormalTexture('interface\\addons\\SpartanUI\\media\\Style_Minimal')
 
-			radio = gui:Create('CheckBox')
-			radio:SetLabel('Minimal')
-			radio:SetType('radio')
-			radio:SetDisabled(true)
-			radio:SetWidth(control.frame:GetWidth() / 1.15)
-			radio:SetHeight(16)
-			radio.frame:SetPoint('TOP', control.frame, 'BOTTOM', 0, 0)
-			radio.frame:SetParent(control.frame)
-			radio.frame:Show()
-			control.radio = radio
+			control.radio = StdUi:Radio(SUI_Win.Artwork, 'Minimal', 'SUIArtwork', 120, 20)
+			control.radio:SetValue('Minimal')
+			StdUi:GlueBelow(control.radio, control)
 
 			SUI_Win.Artwork.Minimal = control
 
-			SUI_Win.Artwork.Classic.radio:SetValue(true)
+			-- Position the Top row
+			StdUi:GlueTop(SUI_Win.Artwork.Fel, SUI_Win, 0, -80)
+			StdUi:GlueLeft(SUI_Win.Artwork.Classic, SUI_Win.Artwork.Fel, -20, 0)
+			StdUi:GlueRight(SUI_Win.Artwork.War, SUI_Win.Artwork.Fel, 20, 0)
+
+			-- Position the Bottom row
+			StdUi:GlueTop(SUI_Win.Artwork.Digital, SUI_Win.Artwork.Fel.radio, 0, -30)
+			StdUi:GlueLeft(SUI_Win.Artwork.Transparent, SUI_Win.Artwork.Digital, -20, 0)
+			StdUi:GlueRight(SUI_Win.Artwork.Minimal, SUI_Win.Artwork.Digital, 20, 0)
+
+			-- Check Classic as default
+			SUI_Win.Artwork.Classic.radio:SetChecked(true)
 		end,
 		Next = function()
+			local window = SUI:GetModule('SetupWizard').window
+			local SUI_Win = window.content
+			local StdUi = window.StdUi
 			SUI.DBMod.Artwork.SetupDone = true
 
-			if (SUI_Win.Artwork.Classic.radio:GetValue()) then
-				SUI.DBMod.Artwork.Style = 'Classic'
-			end
-			if (SUI_Win.Artwork.Fel.radio:GetValue()) then
-				SUI.DBMod.Artwork.Style = 'Fel'
-				SUI.DBMod.Artwork.SubTheme = 'Fel'
-			end
-			if (SUI_Win.Artwork.War.radio:GetValue()) then
-				SUI.DBMod.Artwork.Style = 'War'
-			end
-			if (SUI_Win.Artwork.Digital.radio:GetValue()) then
-				SUI.DBMod.Artwork.Style = 'Fel'
-				SUI.DB.Styles.Fel.SubTheme = 'Digital'
-			end
-			if (SUI_Win.Artwork.Transparent.radio:GetValue()) then
-				SUI.DBMod.Artwork.Style = 'Transparent'
-			end
-			if (SUI_Win.Artwork.Minimal.radio:GetValue()) then
-				SUI.DBMod.Artwork.Style = 'Minimal'
-			end
+			SUI.DBMod.Artwork.Style = StdUi:GetRadioGroupValue('SUIArtwork')
 
 			SUI.DBMod.PlayerFrames.Style = SUI.DBMod.Artwork.Style
 			SUI.DBMod.PartyFrames.Style = SUI.DBMod.Artwork.Style
@@ -363,19 +381,15 @@ function Artwork_Core:FirstTime()
 			SUI_Win.Artwork:Hide()
 			SUI_Win.Artwork = nil
 		end,
-		RequireReload = true,
-		Priority = true,
-		Skipable = true,
-		NoReloadOnSkip = true,
 		Skip = function()
+			local SUI_Win = SUI:GetModule('SetupWizard').window
 			SUI.DBMod.Artwork.SetupDone = true
 			SUI_Win.Artwork:Hide()
 			SUI_Win.Artwork = nil
 		end
 	}
-	local SetupWindow = SUI:GetModule('SetupWindow')
+	local SetupWindow = SUI:GetModule('SetupWizard')
 	SetupWindow:AddPage(PageData)
-	SetupWindow:DisplayPage()
 end
 
 function Artwork_Core:OnEnable()
@@ -483,5 +497,5 @@ function Artwork_Core:RefreshPositions()
 	local BarModule = GetBarModule()
 	if BarModule then
 		return BarModule:RefreshPositions()
-	end
+		end
 end

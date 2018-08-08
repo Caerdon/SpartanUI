@@ -84,7 +84,7 @@ local NamePlateFactory = function(frame, unit)
 		-- health bar
 		local health = CreateFrame('StatusBar', nil, frame)
 		health:SetPoint('BOTTOM')
-		health:SetSize(frame:GetWidth(), 5)
+		health:SetSize(frame:GetWidth(), SUI.DBMod.NamePlates.Health.height)
 		health:SetStatusBarTexture(BarTexture)
 		-- health.colorHealth = true
 		health.frequentUpdates = true
@@ -106,7 +106,7 @@ local NamePlateFactory = function(frame, unit)
 			nameString = nameString .. ' [SUI_ColorClass][name]'
 		end
 		if nameString ~= '' then
-			frame.Name = health:CreateFontString()
+			frame.Name = health:CreateFontString(nil, 'BACKGROUND')
 			SUI:FormatFont(frame.Name, 10, 'Player')
 			frame.Name:SetSize(frame:GetWidth(), 12)
 			frame.Name:SetJustifyH('LEFT')
@@ -118,7 +118,7 @@ local NamePlateFactory = function(frame, unit)
 		if SUI.DBMod.NamePlates.ShowCastbar then
 			local cast = CreateFrame('StatusBar', nil, frame)
 			cast:SetPoint('TOP', frame.Health, 'BOTTOM', 0, 0)
-			cast:SetSize(frame:GetWidth(), 4)
+			cast:SetSize(frame:GetWidth(), SUI.DBMod.NamePlates.Castbar.height)
 			cast:SetStatusBarTexture(BarTexture)
 			cast:SetStatusBarColor(1, 0.7, 0)
 			if SUI.DBMod.NamePlates.ShowCastbarText then
@@ -150,6 +150,13 @@ local NamePlateFactory = function(frame, unit)
 		Auras:SetSize(frame:GetWidth(), 16)
 		Auras.onlyShowPlayer = true
 		frame.Auras = Auras
+
+		-- Raid Icon
+		if SUI.DBMod.NamePlates.ShowRaidTargetIndicator then
+			frame.RaidTargetIndicator = frame:CreateTexture(nil, 'OVERLAY')
+			frame.RaidTargetIndicator:SetSize(15, 15)
+			frame.RaidTargetIndicator:SetPoint('BOTTOM', frame.Health, 'TOPLEFT', 0, 0)
+		end
 
 		-- Target Indicator
 		local TargetIndicator = CreateFrame('Frame', 'BACKGROUND', frame)
@@ -192,6 +199,31 @@ local NamePlateFactory = function(frame, unit)
 		frame.PvPIndicator:SetSize(1, 1)
 		frame.PvPIndicator:SetPoint('BOTTOMLEFT')
 		frame.PvPIndicator.Override = pvpIconWar
+
+		-- Threat Display
+		local ThreatIndicator = frame:CreateTexture(nil, 'OVERLAY')
+		ThreatIndicator:SetTexture('Interface\\RaidFrame\\Raid-FrameHighlights')
+		ThreatIndicator:SetTexCoord(0.00781250, 0.55468750, 0.00781250, 0.27343750)
+		ThreatIndicator:SetAllPoints(frame)
+		-- overlay:SetVertexColor(1, 0, 0)
+		-- overlay:Hide()
+		-- frame.ThreatIndicatorOverlay = overlay
+		frame.ThreatIndicator = ThreatIndicator
+
+		-- Things to do if this is the players display
+		if (UnitIsUnit(unit, 'player')) then
+			local attachPoint = 'Castbar'
+			if not SUI.DBMod.NamePlates.ShowCastbar then
+				attachPoint = 'Health'
+			end
+			-- Setup Player Icons
+			if SUI.DBMod.NamePlates.ShowPlayerPowerIcons then
+				SUI:PlayerPowerIcons(frame, attachPoint)
+			end
+		end
+
+		-- Setup Scale
+		frame:SetScale(SUI.DBMod.NamePlates.Scale)
 	end
 end
 
@@ -203,7 +235,16 @@ function module:OnInitialize()
 		ShowCastbar = true,
 		ShowCastbarText = true,
 		ShowTarget = true,
-		FlashOnInterruptibleCast = true
+		ShowRaidTargetIndicator = true,
+		ShowPlayerPowerIcons = true,
+		FlashOnInterruptibleCast = true,
+		Scale = 1,
+		Health = {
+			height = 5
+		},
+		Castbar = {
+			height = 5
+		}
 	}
 	if not SUI.DBMod.NamePlates then
 		SUI.DBMod.NamePlates = Defaults
@@ -290,7 +331,7 @@ function module:BuildOptions()
 			FlashOnInterruptibleCast = {
 				name = L['Flash on interruptible cast'],
 				type = 'toggle',
-				order = 4,
+				order = 5,
 				get = function(info)
 					return SUI.DBMod.NamePlates.FlashOnInterruptibleCast
 				end,
@@ -298,47 +339,47 @@ function module:BuildOptions()
 					SUI.DBMod.NamePlates.FlashOnInterruptibleCast = val
 				end
 			},
-			desc1 = {
-				name = 'Nameplates are a beta feature, rather than disabling them for the Pre-Patch builds i have left them on so you can start providing me feedback on what you would like to see added to them.',
-				type = 'description',
-				order = 200,
-				fontSize = 'medium'
+			Scale = {
+				name = L['Nameplate scale'],
+				type = 'range',
+				min = -20,
+				max = 20,
+				step = 1,
+				order = 100,
+				get = function(info)
+					return SUI.DBMod.NamePlates.Scale
+				end,
+				set = function(info, val)
+					SUI.DBMod.NamePlates.Scale = val
+				end
 			},
-			desc2 = {
-				name = 'Nameplates will be finished in SpartanUI 5.0',
-				type = 'description',
-				order = 300,
-				fontSize = 'medium'
+			HealthbarHeight = {
+				name = L['Health bar height'],
+				type = 'range',
+				min = 1,
+				max = 30,
+				step = 1,
+				order = 101,
+				get = function(info)
+					return SUI.DBMod.NamePlates.Health.height
+				end,
+				set = function(info, val)
+					SUI.DBMod.NamePlates.Health.height = val
+				end
 			},
-			desc3 = {
-				name = 'Current plans are:',
-				type = 'description',
-				order = 400,
-				fontSize = 'medium'
-			},
-			aa = {
-				name = '-Flash on interuptable cast',
-				type = 'description',
-				order = 401,
-				fontSize = 'small'
-			},
-			ab = {
-				name = '-Threat glow',
-				type = 'description',
-				order = 402,
-				fontSize = 'small'
-			},
-			ac = {
-				name = '-Customizable size',
-				type = 'description',
-				order = 403,
-				fontSize = 'small'
-			},
-			af = {
-				name = '-And more! Full list on Github.',
-				type = 'description',
-				order = 407,
-				fontSize = 'small'
+			CastbarHeight = {
+				name = L['Cast bar height'],
+				type = 'range',
+				min = 1,
+				max = 20,
+				step = 1,
+				order = 102,
+				get = function(info)
+					return SUI.DBMod.NamePlates.Castbar.height
+				end,
+				set = function(info, val)
+					SUI.DBMod.NamePlates.Castbar.height = val
+				end
 			}
 		}
 	}

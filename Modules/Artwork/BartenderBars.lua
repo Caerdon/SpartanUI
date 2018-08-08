@@ -4,9 +4,11 @@ local module = SUI:NewModule('Artwork_BartenderBars')
 module.bars = {}
 module.DB = SUI.DBMod.BartenderBars
 local StyleSettings
-local Bartender4Version, BartenderMin = '', '4.7.1'
+local BartenderMin = '', '4.8.0'
 if select(4, GetAddOnInfo('Bartender4')) then
-	Bartender4Version = GetAddOnMetadata('Bartender4', 'Version')
+	SUI.DB.Bartender4Version = GetAddOnMetadata('Bartender4', 'Version')
+else
+	SUI.DB.Bartender4Version = 0
 end
 
 local function CheckForBartender()
@@ -16,7 +18,7 @@ local function CheckForBartender()
 		-- We always want to show it as the user can turn on / off Bartender at will
 		isInstalled = false
 		StaticPopup_Show('BartenderInstallWarning')
-	elseif Bartender4Version < BartenderMin then
+	elseif SUI.DB.Bartender4Version < BartenderMin then
 		isInstalled = false
 		StaticPopup_Show('BartenderVerWarning')
 	end
@@ -35,7 +37,7 @@ function module:Initialize(Settings)
 				'|n|r|n|n' ..
 					L['Warning'] ..
 						': ' ..
-							L['BartenderOldMSG'] .. ' ' .. Bartender4Version .. '|n|nSpartanUI requires ' .. BartenderMin .. ' or higher.',
+							L['BartenderOldMSG'] .. ' ' .. SUI.DB.Bartender4Version .. '|n|nSpartanUI requires ' .. BartenderMin .. ' or higher.',
 		button1 = 'Ok',
 		OnAccept = function()
 			SUI.DBG.BartenderVerWarning = SUI.Version
@@ -126,6 +128,25 @@ function module:GetMicroMenuBar()
 end
 
 function module:RefreshPositions()
+	if BT4BarBagBar then
+		if not SUI.DB.Styles.War.MovedBars.BT4BarPetBar then
+			BT4BarPetBar:ClearAllPoints()
+			BT4BarPetBar:SetPoint('TOPLEFT', module.Trays.left, 'TOPLEFT', 50, -2)
+		end
+		if not SUI.DB.Styles.War.MovedBars.BT4BarStanceBar then
+			BT4BarStanceBar:ClearAllPoints()
+			BT4BarStanceBar:SetPoint('TOPRIGHT', module.Trays.left, 'TOPRIGHT', -50, -2)
+		end
+
+		if not SUI.DB.Styles.War.MovedBars.BT4BarMicroMenu then
+			BT4BarMicroMenu:ClearAllPoints()
+			BT4BarMicroMenu:SetPoint('TOPLEFT', module.Trays.right, 'TOPLEFT', 50, -2)
+		end
+		if not SUI.DB.Styles.War.MovedBars.BT4BarBagBar then
+			BT4BarBagBar:ClearAllPoints()
+			BT4BarBagBar:SetPoint('TOPRIGHT', module.Trays.right, 'TOPRIGHT', -50, -2)
+		end
+	end
 end
 
 function module:ResetMovedBars()
@@ -255,7 +276,7 @@ function module:BT4ProfileAttach(msg)
 			-- ReloadUI()
 		end
 	}
-	local SetupWindow = SUI:GetModule('SetupWindow')
+	local SetupWindow = SUI:GetModule('SUIWindow')
 	SetupWindow:DisplayPage(PageData)
 end
 

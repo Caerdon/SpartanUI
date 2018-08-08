@@ -24,7 +24,6 @@ function module:Init()
 	end
 	module:SetupMenus()
 	module:InitFramework()
-	module:InitActionBars()
 	BarSetupSuccessful = Artwork_Core:SetupBars()	
 	InitRan = true
 end
@@ -40,8 +39,8 @@ function module:OnEnable()
 			module:Init()
 		end
 
+		module:SlidingTrays()
 		module:EnableFramework()
-		module:EnableActionBars()
 		if (SUI.DBMod.Artwork.FirstLoad and BarSetupSuccessful) then
 			SUI.DBMod.Artwork.FirstLoad = false
 		end -- We want to do this last
@@ -54,11 +53,27 @@ function module:SetupMenus()
 		type = 'group',
 		order = 10,
 		args = {
+			HideCenterGraphic = {
+				name = L['Hide center graphic'],
+				type = 'toggle',
+				order = 1,
+				get = function(info)
+					return SUI.DB.Styles.Minimal.HideCenterGraphic
+				end,
+				set = function(info, val)
+					SUI.DB.Styles.Minimal.HideCenterGraphic = val
+					if SUI.DB.Styles.Minimal.HideCenterGraphic then
+						Minimal_SpartanUI_Base1:Hide()
+					else
+						Minimal_SpartanUI_Base1:Show()
+					end
+				end
+			},
 			alpha = {
 				name = L['ArtColor'],
 				type = 'color',
 				hasAlpha = true,
-				order = 1,
+				order = 2,
 				width = 'full',
 				desc = L['TransparencyDesc'],
 				get = function(info)

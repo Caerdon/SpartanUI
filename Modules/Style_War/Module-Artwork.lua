@@ -11,8 +11,8 @@ module.StatusBarSettings = {
 	War_StatusBar_Left = {
 		bgImg = 'Interface\\AddOns\\SpartanUI_Style_War\\Images\\StatusBar-' .. UnitFactionGroup('Player'),
 		size = {370, 20},
-		TooltipSize = {250, 65},
-		TooltipTextSize = {225, 40},
+		TooltipSize = {350, 100},
+		TooltipTextSize = {330, 80},
 		texCords = {0.0546875, 0.9140625, 0.5555555555555556, 0},
 		GlowPoint = {x = -16},
 		MaxWidth = 48
@@ -21,15 +21,15 @@ module.StatusBarSettings = {
 		bgImg = 'Interface\\AddOns\\SpartanUI_Style_War\\Images\\StatusBar-' .. UnitFactionGroup('Player'),
 		Grow = 'RIGHT',
 		size = {370, 20},
-		TooltipSize = {250, 65},
-		TooltipTextSize = {225, 40},
+		TooltipSize = {350, 100},
+		TooltipTextSize = {330, 80},
 		texCords = {0.0546875, 0.9140625, 0.5555555555555556, 0},
 		GlowPoint = {x = 16},
 		MaxWidth = 48
 	}
 }
 local CurScale
-local petbattle, trayWatcher = CreateFrame('Frame'), CreateFrame('Frame')
+local petbattle = CreateFrame('Frame')
 
 -- Misc Framework stuff
 function module:updateScale()
@@ -67,82 +67,14 @@ function module:updateAlpha()
 		else
 			_G['War_Bar' .. i]:Hide()
 		end
-		if SUI.DB.Styles.War.Artwork.Stance.enable then
-			_G['War_StanceBar']:Show()
-			_G['War_StanceBar']:SetAlpha(SUI.DB.Styles.War.Artwork.Stance.alpha)
-		else
-			_G['War_StanceBar']:Hide()
-		end
-		if SUI.DB.Styles.War.Artwork.MenuBar.enable then
-			_G['War_MenuBar']:Show()
-			_G['War_MenuBar']:SetAlpha(SUI.DB.Styles.War.Artwork.MenuBar.alpha)
-		else
-			_G['War_MenuBar']:Hide()
-		end
 	end
 end
 
-function module:updateOffset()
+function module:updateOffset(Top, offset)
 	if InCombatLockdown() then
 		return
 	end
 
-	local Top = 0
-	local fubar, ChocolateBar, titan = 0, 0, 0
-
-	if not SUI.DB.yoffsetAuto then
-		offset = max(SUI.DB.yoffset, 0)
-	else
-		for i = 1, 4 do -- FuBar Offset
-			if (_G['FuBarFrame' .. i] and _G['FuBarFrame' .. i]:IsVisible()) then
-				local bar = _G['FuBarFrame' .. i]
-				local point = bar:GetPoint(1)
-				if point:find('TOP.*') then
-					Top = Top + bar:GetHeight()
-				end
-				if point == 'BOTTOMLEFT' then
-					fubar = fubar + bar:GetHeight()
-				end
-			end
-		end
-
-		for i = 1, 100 do -- Chocolate Bar Offset
-			if (_G['ChocolateBar' .. i] and _G['ChocolateBar' .. i]:IsVisible()) then
-				local bar = _G['ChocolateBar' .. i]
-				local point = bar:GetPoint(1)
-				if point:find('TOP.*') then
-					Top = Top + bar:GetHeight()
-				end
-				if point == 'RIGHT' then
-					ChocolateBar = ChocolateBar + bar:GetHeight()
-				end
-			end
-		end
-
-		local TitanTopBar = {[1] = 'Bar2', [2] = 'Bar'} -- Top 2 Bar names
-		for i = 1, 2 do
-			if (_G['Titan_Bar__Display_' .. TitanTopBar[i]] and TitanPanelGetVar(TitanTopBar[i] .. '_Show')) then
-				local PanelScale = TitanPanelGetVar('Scale') or 1
-				Top = Top + (PanelScale * _G['Titan_Bar__Display_' .. TitanTopBar[i]]:GetHeight())
-			end
-		end
-
-		local TitanBarOrder = {[1] = 'AuxBar2', [2] = 'AuxBar'} -- Bottom 2 Bar names
-
-		for i = 1, 2 do
-			if (_G['Titan_Bar__Display_' .. TitanBarOrder[i]] and TitanPanelGetVar(TitanBarOrder[i] .. '_Show')) then
-				local PanelScale = TitanPanelGetVar('Scale') or 1
-				titan = titan + (PanelScale * _G['Titan_Bar__Display_' .. TitanBarOrder[i]]:GetHeight())
-			end
-		end
-
-		if OrderHallCommandBar and OrderHallCommandBar:IsVisible() then
-			Top = Top + OrderHallCommandBar:GetHeight()
-		end
-
-		offset = max(fubar + titan + ChocolateBar, 1)
-		SUI.DB.yoffset = offset
-	end
 	module.Trays.left:ClearAllPoints()
 	module.Trays.right:ClearAllPoints()
 	module.Trays.left:SetPoint('TOP', UIParent, 'TOP', -300, (Top * -1))
@@ -203,6 +135,12 @@ function module:SetupVehicleUI()
 				Minimap:Show()
 			end
 		)
+		War_SpartanUI:HookScript(
+			'OnShow',
+			function()
+				Artwork_Core:trayWatcherEvents()
+			end
+		)
 		RegisterStateDriver(petbattle, 'visibility', '[petbattle] hide; show')
 		RegisterStateDriver(War_SpartanUI, 'visibility', '[overridebar][vehicleui] hide; show')
 	end
@@ -236,7 +174,7 @@ function module:InitArtwork()
 end
 
 function module:EnableArtwork()
-	module:ActionBars()
+	--Setup the Bottom Artwork
 	War_SpartanUI:SetFrameStrata('BACKGROUND')
 	War_SpartanUI:SetFrameLevel(1)
 
@@ -245,30 +183,27 @@ function module:EnableArtwork()
 
 	War_SpartanUI.Right = War_SpartanUI:CreateTexture('War_SpartanUI_Right', 'BORDER')
 	War_SpartanUI.Right:SetPoint('LEFT', War_SpartanUI.Left, 'RIGHT', 0, 0)
-	local barBG
 
 	War_SpartanUI.Left:SetTexture('Interface\\AddOns\\SpartanUI_Style_War\\Images\\Base_Bar_Left.tga')
 	War_SpartanUI.Right:SetTexture('Interface\\AddOns\\SpartanUI_Style_War\\Images\\Base_Bar_Right.tga')
-	barBG = 'Interface\\AddOns\\SpartanUI_Style_War\\Images\\Barbg-' .. UnitFactionGroup('Player')
 
+	-- Inital Scaling
 	War_SpartanUI.Left:SetScale(.75)
 	War_SpartanUI.Right:SetScale(.75)
 
-	for i = 1, 4 do
-		_G['War_Bar' .. i .. 'BG']:SetAlpha(.25)
-	end
+	--Setup Sliding Trays
 	module:SlidingTrays()
 
+	-- Setup the bar BG
+	local barBG = 'Interface\\AddOns\\SpartanUI_Style_War\\Images\\Barbg-' .. UnitFactionGroup('Player')
 	if barBG then
 		for i = 1, 4 do
 			_G['War_Bar' .. i .. 'BG']:SetTexture(barBG)
+			_G['War_Bar' .. i .. 'BG']:SetAlpha(.25)
 		end
-
-		War_MenuBarBG:SetTexture(barBG)
-		War_StanceBarBG:SetTexture(barBG)
 	end
 
-	module:updateOffset()
+	Artwork_Core:updateOffset()
 
 	hooksecurefunc(
 		'UIParent_ManageFramePositions',
@@ -301,15 +236,6 @@ function module:EnableArtwork()
 	module:updateAlpha()
 end
 
-function module:ActionBars()
-	-- local Settings = {
-	-- 	style = "Blizzard"
-	-- }
-
-	-- local ActionBars = SUI:GetModule('Artwork_ActionBars')
-	-- ActionBars:Initialize(Settings)
-end
-
 function module:StatusBars()
 	local StatusBars = SUI:GetModule('Artwork_StatusBars')
 	StatusBars:Initalize(module.StatusBarSettings)
@@ -318,188 +244,32 @@ function module:StatusBars()
 	StatusBars.bars.War_StatusBar_Right:SetAlpha(.9)
 
 	-- Position the StatusBars
-	StatusBars.bars.War_StatusBar_Left:SetPoint('BOTTOMRIGHT', War_SpartanUI, 'BOTTOM', -100, 0)
-	StatusBars.bars.War_StatusBar_Right:SetPoint('BOTTOMLEFT', War_SpartanUI, 'BOTTOM', 100, 0)
-end
-
-local SetBarVisibility = function(side, state)
-	if side == 'left' and state == 'hide' then
-		-- BT4BarStanceBar
-		if not SUI.DB.Styles.War.MovedBars.BT4BarStanceBar and not SUI.DB.Styles.War.MovedBars.BT4BarStanceBar then
-			Artwork_Core:GetStanceBar():Hide()
-		end
-		if not SUI.DB.Styles.War.MovedBars.BT4BarPetBar and not SUI.DB.Styles.War.MovedBars.BT4BarPetBar then
-			Artwork_Core:GetPetBar():Hide()
-		end
-	elseif side == 'right' and state == 'hide' then
-		if not SUI.DB.Styles.War.MovedBars.BT4BarBagBar and not SUI.DB.Styles.War.MovedBars.BT4BarBagBar then
-			Artwork_Core:GetBagBar():Hide()
-		end
-		if not SUI.DB.Styles.War.MovedBars.BT4BarMicroMenu and not SUI.DB.Styles.War.MovedBars.BT4BarMicroMenu then
-			Artwork_Core:GetMicroMenuBar():Hide()
-		end
-	end
-
-	if side == 'left' and state == 'show' then
-		-- BT4BarStanceBar
-		if not SUI.DB.Styles.War.MovedBars.BT4BarStanceBar and not SUI.DB.Styles.War.MovedBars.BT4BarStanceBar then
-			Artwork_Core:GetStanceBar():Show()
-		end
-		if not SUI.DB.Styles.War.MovedBars.BT4BarPetBar and not SUI.DB.Styles.War.MovedBars.BT4BarPetBar then
-			Artwork_Core:GetPetBar():Show()
-		end
-	elseif side == 'right' and state == 'show' then
-		if not SUI.DB.Styles.War.MovedBars.BT4BarBagBar and not SUI.DB.Styles.War.MovedBars.BT4BarBagBar then
-			Artwork_Core:GetBagBar():Show()
-		end
-		if not SUI.DB.Styles.War.MovedBars.BT4BarMicroMenu and not SUI.DB.Styles.War.MovedBars.BT4BarMicroMenu then
-			Artwork_Core:GetMicroMenuBar():Show()
-		end
-	end
-end
-
-local trayWatcherEvents = function()
-	module:updateOffset()
-	local trayIDs = {'left', 'right'}
-	War_MenuBarBG:SetAlpha(0)
-	War_StanceBarBG:SetAlpha(0)
-
-	for _, key in ipairs(trayIDs) do
-		if SUI.DB.Styles.War.SlidingTrays[key].collapsed then
-			module.Trays[key].expanded:Hide()
-			module.Trays[key].collapsed:Show()
-			SetBarVisibility(module.Trays[key], 'hide')
-		else
-			module.Trays[key].expanded:Show()
-			module.Trays[key].collapsed:Hide()
-			SetBarVisibility(module.Trays[key], 'show')
-		end
-	end
-end
-
-local CollapseToggle = function(self)
-	if SUI.DB.Styles.War.SlidingTrays[self.side].collapsed then
-		SUI.DB.Styles.War.SlidingTrays[self.side].collapsed = false
-		module.Trays[self.side].expanded:Show()
-		module.Trays[self.side].collapsed:Hide()
-		SetBarVisibility(self.side, 'show')
-	else
-		SUI.DB.Styles.War.SlidingTrays[self.side].collapsed = true
-		module.Trays[self.side].expanded:Hide()
-		module.Trays[self.side].collapsed:Show()
-		SetBarVisibility(self.side, 'hide')
-	end
+	StatusBars.bars.War_StatusBar_Left:SetPoint('BOTTOMRIGHT', War_ActionBarPlate, 'BOTTOM', -100, 0)
+	StatusBars.bars.War_StatusBar_Right:SetPoint('BOTTOMLEFT', War_ActionBarPlate, 'BOTTOM', 100, 0)
 end
 
 -- Artwork Stuff
 function module:SlidingTrays()
-	local trayIDs = {'left', 'right'}
-	War_MenuBarBG:SetAlpha(0)
-	War_StanceBarBG:SetAlpha(0)
-
-	for _, key in ipairs(trayIDs) do
-		local tray = CreateFrame('Frame', nil, UIParent)
-		tray:SetFrameStrata('BACKGROUND')
-		tray:SetAlpha(.8)
-		tray:SetSize(400, 45)
-
-		local expanded = CreateFrame('Frame', nil, tray)
-		expanded:SetAllPoints()
-		local collapsed = CreateFrame('Frame', nil, tray)
-		collapsed:SetAllPoints()
-
-		local bg = expanded:CreateTexture(nil, 'BACKGROUND', expanded)
-		bg:SetTexture('Interface\\AddOns\\SpartanUI_Style_War\\Images\\Trays-' .. UnitFactionGroup('Player'))
-		bg:SetAllPoints()
-		bg:SetTexCoord(0.076171875, 0.92578125, 0, 0.18359375)
-
-		local bgCollapsed = collapsed:CreateTexture(nil, 'BACKGROUND', collapsed)
-		bgCollapsed:SetTexture('Interface\\AddOns\\SpartanUI_Style_War\\Images\\Trays-' .. UnitFactionGroup('Player'))
-		bgCollapsed:SetPoint('TOPLEFT', tray)
-		bgCollapsed:SetPoint('TOPRIGHT', tray)
-		bgCollapsed:SetHeight(18)
-		bgCollapsed:SetTexCoord(0.076171875, 0.92578125, 1, 0.92578125)
-
-		local btnUp = CreateFrame('BUTTON', nil, expanded)
-		local UpTex = expanded:CreateTexture()
-		UpTex:SetTexture('Interface\\AddOns\\SpartanUI_Style_War\\Images\\Trays-' .. UnitFactionGroup('Player'))
-		UpTex:SetTexCoord(0.3671875, 0.640625, 0.20703125, 0.25390625)
-		UpTex:Hide()
-		btnUp:SetSize(130, 9)
-		UpTex:SetAllPoints(btnUp)
-		btnUp:SetNormalTexture('')
-		btnUp:SetHighlightTexture(UpTex)
-		btnUp:SetPushedTexture('')
-		btnUp:SetDisabledTexture('')
-		btnUp:SetPoint('BOTTOM', tray, 'BOTTOM', 1, 2)
-
-		local btnDown = CreateFrame('BUTTON', nil, collapsed)
-		local DownTex = collapsed:CreateTexture()
-		DownTex:SetTexture('Interface\\AddOns\\SpartanUI_Style_War\\Images\\Trays-' .. UnitFactionGroup('Player'))
-		DownTex:SetTexCoord(0.3671875, 0.640625, 0.25390625, 0.20703125)
-		DownTex:Hide()
-		btnDown:SetSize(130, 9)
-		DownTex:SetAllPoints(btnDown)
-		btnDown:SetNormalTexture('')
-		btnDown:SetHighlightTexture(DownTex)
-		btnDown:SetPushedTexture('')
-		btnDown:SetDisabledTexture('')
-		btnDown:SetPoint('TOP', tray, 'TOP', 2, -6)
-
-		btnUp.side = key
-		btnDown.side = key
-		btnUp:SetScript('OnClick', CollapseToggle)
-		btnDown:SetScript('OnClick', CollapseToggle)
-
-		expanded.bg = bg
-		expanded.btnUp = btnUp
-
-		collapsed.bgCollapsed = bgCollapsed
-		collapsed.btnDown = btnDown
-
-		tray.expanded = expanded
-		tray.collapsed = collapsed
-
-		if SUI.DB.Styles.War.SlidingTrays[key].collapsed then
-			tray.expanded:Hide()
-			SetBarVisibility(key, 'hide')
-		else
-			tray.collapsed:Hide()
-		end
-		module.Trays[key] = tray
-	end
-
-	module.Trays.left:SetPoint('TOP', UIParent, 'TOP', -300, 0)
-	module.Trays.right:SetPoint('TOP', UIParent, 'TOP', 300, 0)
-
-	trayWatcher:SetScript('OnEvent', trayWatcherEvents)
-	trayWatcher:RegisterEvent('PLAYER_LOGIN')
-	trayWatcher:RegisterEvent('PLAYER_ENTERING_WORLD')
-	trayWatcher:RegisterEvent('ZONE_CHANGED')
-	trayWatcher:RegisterEvent('ZONE_CHANGED_INDOORS')
-	trayWatcher:RegisterEvent('ZONE_CHANGED_NEW_AREA')
-
-	-- Default movetracker ignores stuff attached to UIParent (Tray items are)
-	local FrameList = {
-		BT4BarBagBar,
-		BT4BarStanceBar,
-		BT4BarPetBar,
-		BT4BarMicroMenu
+	local Settings = {
+		bg = {
+			Texture = 'Interface\\AddOns\\SpartanUI_Style_War\\Images\\Trays-' .. UnitFactionGroup('Player'),
+			TexCoord = {.076171875, 0.92578125, 0, 0.18359375}
+		},
+		bgCollapsed = {
+			Texture = 'Interface\\AddOns\\SpartanUI_Style_War\\Images\\Trays-' .. UnitFactionGroup('Player'),
+			TexCoord = {0.076171875, 0.92578125, 1, 0.92578125}
+		},
+		UpTex = {
+			Texture = 'Interface\\AddOns\\SpartanUI_Style_War\\Images\\Trays-' .. UnitFactionGroup('Player'),
+			TexCoord = {0.3671875, 0.640625, 0.20703125, 0.25390625}
+		},
+		DownTex = {
+			Texture = 'Interface\\AddOns\\SpartanUI_Style_War\\Images\\Trays-' .. UnitFactionGroup('Player'),
+			TexCoord = {0.3671875, 0.640625, 0.25390625, 0.20703125}
+		}
 	}
 
-	for _, v in ipairs(FrameList) do
-		if v then
-			v.SavePosition = function()
-				if not SUI.DB.Styles[SUI.DBMod.Artwork.Style].MovedBars[v:GetName()] and not SUI.DBG.BartenderChangesActive then
-					SUI.DB.Styles[SUI.DBMod.Artwork.Style].MovedBars[v:GetName()] = true
-					LibStub('LibWindow-1.1').windowData[v].storage.parent = UIParent
-					v:SetParent(UIParent)
-				end
-
-				LibStub('LibWindow-1.1').SavePosition(v)
-			end
-		end
-	end
+	module.Trays = Artwork_Core:SlidingTrays(Settings)
 end
 
 -- Bartender Stuff
